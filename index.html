@@ -67,13 +67,18 @@
     position: absolute; top: 0; left: 0; height: 64px; width: 100%;
     display: flex; align-items: center; justify-content: center;
     padding: 0 18px; font-size: 22px; font-weight: 800; color: #F5F1E6;
-    white-space: nowrap; will-change: transform, opacity, filter;
-    /* ✨ [수정] 폰트 렌더링 최적화를 위한 3D 속성 추가 */
+    /* ✨ 긴 글자가 오면 두 줄로 예쁘게 줄바꿈 되도록 수정 */
+    white-space: normal; word-break: keep-all; line-height: 1.15;
+    will-change: transform, opacity, filter;
     backface-visibility: hidden;
-    /* transform: translateZ(0); <- 이 부분이 문제를 일으켜서 삭제! */
   }
   .reel-item span {
-    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 최대 2줄까지만 보여줌 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
   }
   .reel-item.win {
     color: var(--gold); position: absolute; top: 0; left: 0;
@@ -312,7 +317,7 @@
       const scale = 1 - Math.abs(ratio) * 0.28;
       const brightness = 1 - Math.abs(ratio) * 0.55;
       const opacity = 1 - Math.abs(ratio) * 0.35;
-      // ✨ [수정] JS에서 직접 3D 가속 속성(translateZ)을 transform에 포함
+      
       el.style.transform = `translateY(${baseTop + dist}px) rotateX(${-angle}deg) scale(${scale}) translateZ(0)`;
       el.style.filter = `brightness(${brightness})`;
       el.style.opacity = opacity;
@@ -320,7 +325,10 @@
     currentPos = pos;
   }
 
-  function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+  // ✨ [수정] 빠칭코/슬롯머신처럼 돌다가 서서히 마찰력으로 멈추는 수학 공식
+  function easeOutCirc(x) {
+    return Math.sqrt(1 - Math.pow(x - 1, 2));
+  }
   function easeOutBack(t) {
     const c1 = 1.70158; const c3 = c1 + 1;
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
@@ -346,14 +354,18 @@
     reelWindowEl.classList.remove('idle', 'celebrate');
 
     const winner = pickWinner();
-    const TOTAL_SPIN_DISTANCE = 4200; const overshootExtra = 3;
-    const neededItems = Math.ceil(TOTAL_SPIN_DISTANCE / ITEM_H) + overshootExtra + 2;
+    
+    // ✨ [수정] 오버슈트(지나침)를 완전히 없애고 한 번에 길게 돌도록 변경
+    const TOTAL_SPIN_DISTANCE = 5000; 
+    const neededItems = Math.ceil(TOTAL_SPIN_DISTANCE / ITEM_H) + 3;
     const sequence = [];
     while (sequence.length < neededItems) {
       const shuffled = [...menus].sort(() => Math.random() - 0.5);
       sequence.push(...shuffled);
     }
-    const winIndex = sequence.length - overshootExtra - 1;
+    
+    // 배열의 맨 마지막 부근에 당첨 아이템 삽입 (지나치지 않음!)
+    const winIndex = sequence.length - 2;
     sequence[winIndex] = winner;
 
     reelEl.innerHTML = '';
@@ -366,27 +378,30 @@
     });
 
     const windowHeight = reelWindowEl.offsetHeight;
-    const centerOffset = (idx) => idx * ITEM_H + ITEM_H / 2 - windowHeight / 2;
-    const winOffset = centerOffset(winIndex);
-    const overshootOffset = centerOffset(winIndex + overshootExtra);
+    const winOffset = winIndex * ITEM_H + ITEM_H / 2 - windowHeight / 2;
 
     drawReel(0);
-    animatePos(0, overshootOffset, 3000, easeOutQuint, () => {
-      animatePos(overshootOffset, winOffset, 450, easeOutBack, async () => {
-        spinning = false; spinBtn.disabled = menus.length < 2;
-        spinBtn.textContent = '다시 돌리기';
-        const winEl = reelEl.querySelector('[data-win="1"]');
-        if (winEl) {
-          winEl.style.filter = 'brightness(1)'; winEl.style.opacity = '1';
-          winEl.classList.add('win'); animateWinScale(winEl);
-        }
-        subHint.classList.add('winner');
-        subHint.innerHTML = `오늘은 <strong>${winner.name}</strong>!<br><a href="https://map.kakao.com/link/search/${encodeURIComponent(winner.name)}" target="_blank" style="display:inline-block; margin-top:12px; padding:8px 16px; background:#FEE500; color:#000; text-decoration:none; border-radius:8px; font-weight:800; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;">🗺️ 카카오맵에서 위치 보기</a>`;
-        const burstEl = document.getElementById('burst');
-        burstEl.classList.remove('on'); void burstEl.offsetWidth; burstEl.classList.add('on');
-        const newHistory = [winner.id, ...history.filter(id => id !== winner.id)].slice(0, 5);
-        await setDoc(doc(db, "config", "history"), { recent: newHistory });
-      });
+    
+    // ✨ [수정] 4.5초 동안 슬롯머신처럼 서서히 부드럽게 멈춥니다.
+    animatePos(0, winOffset, 4500, easeOutCirc, async () => {
+      spinning = false; spinBtn.disabled = menus.length < 2;
+      spinBtn.textContent = '다시 돌리기';
+      
+      const winEl = reelEl.querySelector('[data-win="1"]');
+      if (winEl) {
+        winEl.style.filter = 'brightness(1)'; winEl.style.opacity = '1';
+        winEl.classList.add('win'); 
+        animateWinScale(winEl);
+      }
+      
+      subHint.classList.add('winner');
+      subHint.innerHTML = `오늘은 <strong>${winner.name}</strong>!<br><a href="https://map.kakao.com/link/search/${encodeURIComponent(winner.name)}" target="_blank" style="display:inline-block; margin-top:12px; padding:8px 16px; background:#FEE500; color:#000; text-decoration:none; border-radius:8px; font-weight:800; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;">🗺️ 카카오맵에서 위치 보기</a>`;
+      
+      const burstEl = document.getElementById('burst');
+      burstEl.classList.remove('on'); void burstEl.offsetWidth; burstEl.classList.add('on');
+      
+      const newHistory = [winner.id, ...history.filter(id => id !== winner.id)].slice(0, 5);
+      await setDoc(doc(db, "config", "history"), { recent: newHistory });
     });
   }
 
@@ -394,20 +409,26 @@
     const windowHeight = reelWindowEl.offsetHeight;
     const baseTop = windowHeight / 2 - ITEM_H / 2;
     const startTime = performance.now(); const bounceDuration = 600;
+    
+    // ✨ [수정] 글자 길이에 따라 무식하게 커지지 않도록 최대 줌(Scale) 비율을 스마트하게 조절
+    const textLen = el.textContent.length;
+    const targetScale = textLen > 7 ? 1.15 : 1.4; 
+    const peakScale = targetScale + 0.15;
+
     function step(now) {
       const t = Math.min(1, (now - startTime) / bounceDuration);
       let scale;
       if (t < 0.55) {
-        const p = t / 0.55; scale = 1 + (2.7 - 1) * easeOutBack(p);
+        const p = t / 0.55; scale = 1 + (peakScale - 1) * easeOutBack(p);
       } else {
-        const p = (t - 0.55) / 0.45; scale = 2.7 + (2.4 - 2.7) * p;
+        const p = (t - 0.55) / 0.45; scale = peakScale + (targetScale - peakScale) * p;
       }
-      // ✨ [수정] JS에서 직접 3D 가속 속성(translateZ)을 transform에 포함
       el.style.transform = `translateY(${baseTop}px) rotateX(0deg) scale(${scale}) translateZ(0)`;
       if (t < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   }
+  
   spinBtn.addEventListener('click', () => { showingWinner = false; spin(); });
 </script>
 </body>
