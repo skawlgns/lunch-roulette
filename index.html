@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>오늘 점심 뭐 먹지</title>
+<!-- ✨ [추가된 부분] 프리텐다드 웹 폰트 불러오기 -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 <style>
   :root {
     --bg: #FBF6EE;
@@ -21,7 +23,10 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    /* ✨ [수정된 부분] 프리텐다드 폰트 적용 및 글씨 부드럽게 처리 */
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background: var(--bg);
     color: var(--ink);
     display: flex;
@@ -136,7 +141,15 @@
     white-space: nowrap;
     backface-visibility: hidden;
     will-change: transform, opacity, filter;
+    transform-style: preserve-3d;
   }
+  .reel-item span {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .reel-item.win {
     color: var(--gold);
     position: absolute;
@@ -211,6 +224,8 @@
     font-size: 14px;
     background: #fff;
     color: var(--ink);
+    /* ✨ 폰트 적용되도록 수정 */
+    font-family: inherit; 
   }
   .add-row input:focus {
     outline: none;
@@ -226,6 +241,7 @@
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
+    font-family: inherit;
   }
   .add-row button:hover { background: #16203a; }
   .menu-list {
@@ -241,7 +257,7 @@
   .menu-list li {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 10px 12px;
     background: var(--navy-light);
     border-radius: 10px;
@@ -255,14 +271,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    background: transparent;
-    border: none;
-    padding: 0;
-  }
-  .menu-list .name:focus {
-    outline: none;
-    background: #fff;
-    border-radius: 4px;
   }
   .menu-list .recent-badge {
     font-size: 11px;
@@ -273,7 +281,9 @@
     font-weight: 700;
     flex: 0 0 auto;
   }
-  .menu-list .del-btn {
+  
+  /* 수정 & 삭제 버튼 공통 스타일 */
+  .menu-list .action-btn {
     flex: 0 0 auto;
     width: 26px;
     height: 26px;
@@ -281,14 +291,21 @@
     border: none;
     background: transparent;
     color: var(--ink-soft);
-    font-size: 16px;
+    font-size: 13px;
     cursor: pointer;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    font-family: inherit;
+  }
+  .menu-list .action-btn:hover {
+    background: #fff;
   }
   .menu-list .del-btn:hover {
-    background: #fff;
     color: var(--tomato-dark);
   }
+
   .empty {
     text-align: center;
     padding: 30px 10px;
@@ -340,11 +357,10 @@
 
 <!-- ✨ Firebase 연동을 위한 모듈 스크립트 ✨ -->
 <script type="module">
-  // 1. 파이어베이스 라이브러리 불러오기
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-  // 2. 지훈님의 프로젝트 정보 세팅
+  // 파이어베이스 설정
   const firebaseConfig = {
     apiKey: "AIzaSyChuyjRAthPxaSpPcZmgNbBruWPCyctWjA",
     authDomain: "lunch-roulette-f8be2.firebaseapp.com",
@@ -354,17 +370,14 @@
     appId: "1:210042496879:web:37726480aae6d8227aea9a"
   };
 
-  // 3. 파이어베이스 및 데이터베이스(DB) 연결
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // --- 기존 상태 변수 ---
   let menus = []; 
   let history = []; 
   let spinning = false;
-  let showingWinner = false; // 당첨 화면 유지 상태
+  let showingWinner = false;
 
-  // DOM 요소 선택
   const reelEl = document.getElementById('reel');
   const reelWindowEl = document.getElementById('reelWindow');
   const spinBtn = document.getElementById('spinBtn');
@@ -375,19 +388,16 @@
   const countText = document.getElementById('countText');
   const hint = document.getElementById('hint');
 
-  // 고유 ID 생성 함수
   function uid() {
     return Math.random().toString(36).slice(2, 9);
   }
 
-  // --- 🪄 [핵심] 파이어베이스 실시간 동기화 (onSnapshot) ---
-  // 메뉴가 추가/수정/삭제될 때마다 자동으로 실행됩니다.
+  // 데이터 실시간 감지
   onSnapshot(collection(db, "menus"), (snapshot) => {
     menus = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
     render();
   });
 
-  // 누군가 룰렛을 돌려 최근 당첨 이력이 변할 때마다 실행됩니다.
   onSnapshot(doc(db, "config", "history"), (docSnap) => {
     if (docSnap.exists()) {
       history = docSnap.data().recent || [];
@@ -395,7 +405,7 @@
     render();
   });
 
-  // --- UI 렌더링 함수 ---
+  // UI 렌더링
   function render() {
     menuListEl.innerHTML = '';
     
@@ -406,23 +416,13 @@
         const li = document.createElement('li');
         const isRecent = history.slice(0, 2).includes(m.id);
 
-        const nameInput = document.createElement('input');
-        nameInput.className = 'name';
-        nameInput.value = m.name;
-        nameInput.maxLength = 20;
-        
-        // ✏️ 메뉴 이름 수정하기 -> 파이어베이스 업데이트
-        nameInput.addEventListener('change', async () => {
-          const v = nameInput.value.trim();
-          if (v) { 
-            await updateDoc(doc(db, "menus", m.id), { name: v });
-          } else { 
-            nameInput.value = m.name; 
-          }
-        });
+        // 이름 텍스트
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        nameSpan.textContent = m.name;
+        li.appendChild(nameSpan);
 
-        li.appendChild(nameInput);
-
+        // 최근 당첨 뱃지
         if (isRecent) {
           const badge = document.createElement('span');
           badge.className = 'recent-badge';
@@ -430,24 +430,46 @@
           li.appendChild(badge);
         }
 
-        const delBtn = document.createElement('button');
-        delBtn.className = 'del-btn';
-        delBtn.innerHTML = '&times;';
-        delBtn.setAttribute('aria-label', '삭제');
-        
-        // 🗑️ 메뉴 삭제하기 -> 파이어베이스에서 삭제
-        delBtn.addEventListener('click', async () => {
-          await deleteDoc(doc(db, "menus", m.id));
+        // ✏️ 수정 버튼
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn edit-btn';
+        editBtn.innerHTML = '✏️';
+        editBtn.title = '이름 수정';
+        editBtn.addEventListener('click', async () => {
+          const newName = prompt('식당 이름을 수정해주세요:', m.name);
+          if (newName !== null) {
+            const v = newName.trim();
+            if (!v || v === m.name) return; 
+            
+            // 중복 검사
+            const isDuplicate = menus.some(x => x.id !== m.id && x.name.replace(/\s/g, '') === v.replace(/\s/g, ''));
+            if (isDuplicate) {
+              alert('이미 등록된 식당입니다! 다른 곳을 적어주세요 🙅‍♂️');
+              return;
+            }
+            await updateDoc(doc(db, "menus", m.id), { name: v });
+          }
         });
+        li.appendChild(editBtn);
 
+        // ❌ 삭제 버튼
+        const delBtn = document.createElement('button');
+        delBtn.className = 'action-btn del-btn';
+        delBtn.innerHTML = '❌';
+        delBtn.title = '삭제';
+        delBtn.addEventListener('click', async () => {
+          if (confirm(`'${m.name}' 식당을 삭제하시겠습니까?`)) {
+            await deleteDoc(doc(db, "menus", m.id));
+          }
+        });
         li.appendChild(delBtn);
+
         menuListEl.appendChild(li);
       });
     }
 
     countText.textContent = `총 ${menus.length}개의 식당`;
 
-    // 릴 창 상태 관리 (도는 중이거나, 막 당첨된 상태가 아니면 idle 띄우기)
     if (!spinning && !showingWinner) {
       reelWindowEl.classList.add('idle');
     }
@@ -464,12 +486,19 @@
       : '';
   }
 
-  // --- 메뉴 추가 버튼 동작 ---
+  // 메뉴 추가
   addBtn.addEventListener('click', async () => {
     const v = newMenuInput.value.trim();
     if (!v) return;
     
-    // 입력창 비우고, 파이어베이스에 추가 (onSnapshot이 감지하고 자동으로 render 해줌)
+    const isDuplicate = menus.some(m => m.name.replace(/\s/g, '') === v.replace(/\s/g, ''));
+    if (isDuplicate) {
+      alert('이미 등록된 식당입니다! 다른 곳을 적어주세요 🙅‍♂️');
+      newMenuInput.value = ''; 
+      newMenuInput.focus();
+      return; 
+    }
+    
     newMenuInput.value = '';
     const newId = uid();
     await setDoc(doc(db, "menus", newId), { name: v });
@@ -479,7 +508,7 @@
     if (e.key === 'Enter') addBtn.click();
   });
 
-  // --- 룰렛 로직 (지훈님 기존 코드 그대로 유지) ---
+  // 룰렛 로직
   function pickWinner() {
     const weighted = [];
     menus.forEach(m => {
@@ -548,7 +577,7 @@
     if (spinning || menus.length < 2) return;
     
     spinning = true;
-    showingWinner = true; // 당첨 화면 유지 상태 켜기
+    showingWinner = true;
     spinBtn.disabled = true;
     spinBtn.textContent = '추첨 중...';
     subHint.classList.remove('winner');
@@ -572,7 +601,7 @@
     sequence.forEach((m, idx) => {
       const item = document.createElement('div');
       item.className = 'reel-item';
-      item.textContent = m.name;
+      item.innerHTML = `<span>${m.name}</span>`;
       if (idx === winIndex) item.dataset.win = '1';
       reelEl.appendChild(item);
     });
@@ -599,14 +628,19 @@
         }
 
         subHint.classList.add('winner');
-        subHint.textContent = `오늘은 ${winner.name}!`;
+        subHint.innerHTML = `
+          오늘은 <strong>${winner.name}</strong>!<br>
+          <a href="https://map.kakao.com/link/search/${encodeURIComponent(winner.name)}" target="_blank" 
+             style="display:inline-block; margin-top:12px; padding:8px 16px; background:#FEE500; color:#000; text-decoration:none; border-radius:8px; font-weight:800; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;">
+             🗺️ 카카오맵에서 위치 보기
+          </a>
+        `;
 
         const burstEl = document.getElementById('burst');
         burstEl.classList.remove('on');
         void burstEl.offsetWidth; 
         burstEl.classList.add('on');
 
-        // 당첨자 파이어베이스에 저장 (다른 사람들에게도 최근 당첨 뱃지 표시됨)
         const newHistory = [winner.id, ...history.filter(id => id !== winner.id)].slice(0, 5);
         await setDoc(doc(db, "config", "history"), { recent: newHistory });
       });
@@ -636,7 +670,7 @@
   }
 
   spinBtn.addEventListener('click', () => {
-    showingWinner = false; // 돌리기 버튼 누르면 당첨 유지 상태 해제
+    showingWinner = false;
     spin();
   });
 </script>
