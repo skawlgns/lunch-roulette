@@ -3,334 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <title>오늘 점심 뭐 먹지</title>
-<!-- ✨ [추가된 부분] 프리텐다드 웹 폰트 불러오기 -->
+<!-- 프리텐다드 웹 폰트 -->
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 <style>
   :root {
-    --bg: #FBF6EE;
-    --card: #FFFFFF;
-    --ink: #1F2937;
-    --ink-soft: #6B6459;
-    --line: #E7DFD0;
-    --tomato: #D8552E;
-    --tomato-dark: #9E3A1B;
-    --tomato-light: #FBE3D8;
-    --navy: #1F2A44;
-    --navy-light: #E9ECF3;
-    --gold: #E8A33D;
-    --radius: 14px;
+    --bg: #FBF6EE; --card: #FFFFFF; --ink: #1F2937; --ink-soft: #6B6459;
+    --line: #E7DFD0; --tomato: #D8552E; --tomato-dark: #9E3A1B;
+    --tomato-light: #FBE3D8; --navy: #1F2A44; --navy-light: #E9ECF3;
+    --gold: #E8A33D; --radius: 14px;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    /* ✨ [수정된 부분] 프리텐다드 폰트 적용 및 글씨 부드럽게 처리 */
     font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: var(--bg);
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 24px;
+    background: var(--bg); color: var(--ink); display: flex;
+    align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
   }
   .app {
-    width: 100%;
-    max-width: 920px;
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 20px;
+    width: 100%; max-width: 920px; display: grid;
+    grid-template-columns: 1.15fr 0.85fr; gap: 20px;
   }
-  @media (max-width: 720px) {
-    .app { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 720px) { .app { grid-template-columns: 1fr; } }
   .panel {
-    background: var(--card);
-    border-radius: 20px;
-    border: 1px solid var(--line);
-    padding: 28px 24px;
+    background: var(--card); border-radius: 20px;
+    border: 1px solid var(--line); padding: 28px 24px;
   }
   .eyebrow {
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    color: var(--tomato-dark);
-    font-weight: 700;
-    margin: 0 0 4px;
+    font-size: 12px; letter-spacing: 0.08em; color: var(--tomato-dark);
+    font-weight: 700; margin: 0 0 4px;
   }
-  h1 {
-    font-size: 22px;
-    margin: 0 0 20px;
-    font-weight: 800;
-    color: var(--navy);
-  }
+  h1 { font-size: 22px; margin: 0 0 20px; font-weight: 800; color: var(--navy); }
 
   /* --- 룰렛 --- */
   .stage {
-    background: var(--navy);
-    border-radius: 16px;
-    padding: 18px;
-    position: relative;
-    overflow: hidden;
+    background: var(--navy); border-radius: 16px; padding: 18px;
+    position: relative; overflow: hidden;
   }
   .stage::before, .stage::after {
-    content: "";
-    position: absolute;
-    left: 0; right: 0;
-    height: 44px;
-    z-index: 3;
-    pointer-events: none;
+    content: ""; position: absolute; left: 0; right: 0;
+    height: 44px; z-index: 3; pointer-events: none;
   }
-  .stage::before {
-    top: 0;
-    background: linear-gradient(180deg, var(--navy), transparent);
-  }
-  .stage::after {
-    bottom: 0;
-    background: linear-gradient(0deg, var(--navy), transparent);
-  }
+  .stage::before { top: 0; background: linear-gradient(180deg, var(--navy), transparent); }
+  .stage::after { bottom: 0; background: linear-gradient(0deg, var(--navy), transparent); }
   .reel-window {
-    height: 200px;
-    overflow: hidden;
-    position: relative;
-    border-radius: 10px;
-    background: #172038;
-    perspective: 500px;
-    perspective-origin: 50% 50%;
+    height: 200px; overflow: hidden; position: relative; border-radius: 10px;
+    background: #172038; perspective: 500px; perspective-origin: 50% 50%;
   }
   .reel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    will-change: transform;
-    transform-style: preserve-3d;
+    position: absolute; top: 0; left: 0; width: 100%;
+    will-change: transform; transform-style: preserve-3d;
   }
   .idle-label {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 700;
-    color: #8890A6;
-    z-index: 1;
+    position: absolute; inset: 0; display: none; align-items: center;
+    justify-content: center; font-size: 20px; font-weight: 700;
+    color: #8890A6; z-index: 1;
   }
-  .reel-window.idle .idle-label {
-    display: flex;
-  }
-  .reel-window.idle .reel {
-    visibility: hidden;
-  }
+  .reel-window.idle .idle-label { display: flex; }
+  .reel-window.idle .reel { visibility: hidden; }
+
   .reel-item {
-    position: absolute;
-    top: 0;
-    left: 0;
-    flex: 0 0 auto;
-    height: 64px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 18px;
-    font-size: 22px;
-    font-weight: 800;
-    color: #F5F1E6;
-    white-space: nowrap;
+    position: absolute; top: 0; left: 0; height: 64px; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 18px; font-size: 22px; font-weight: 800; color: #F5F1E6;
+    white-space: nowrap; will-change: transform, opacity, filter;
+    /* ✨ [수정] 폰트 렌더링 최적화를 위한 3D 속성 추가 */
     backface-visibility: hidden;
-    will-change: transform, opacity, filter;
-    transform-style: preserve-3d;
+    transform: translateZ(0);
   }
   .reel-item span {
-    display: inline-block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   }
-
   .reel-item.win {
-    color: var(--gold);
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2;
-    transform-origin: center;
+    color: var(--gold); position: absolute; top: 0; left: 0;
+    z-index: 2; transform-origin: center;
   }
   .stage .burst {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0;
+    position: absolute; inset: 0; pointer-events: none; opacity: 0;
     background: radial-gradient(circle at 50% 50%, rgba(232,163,61,0.35), transparent 65%);
     z-index: 4;
   }
-  .stage .burst.on {
-    animation: burstFlash 0.6s ease-out;
-  }
+  .stage .burst.on { animation: burstFlash 0.6s ease-out; }
   @keyframes burstFlash {
-    0% { opacity: 0; }
-    30% { opacity: 1; }
-    100% { opacity: 0; }
+    0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; }
   }
   .sub-hint {
-    margin: 12px 0 0;
-    text-align: center;
-    font-size: 13px;
-    color: var(--ink-soft);
-    min-height: 18px;
+    margin: 12px 0 0; text-align: center; font-size: 13px;
+    color: var(--ink-soft); min-height: 18px;
   }
-  .sub-hint.winner {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--tomato-dark);
-  }
+  .sub-hint.winner { font-size: 16px; font-weight: 800; color: var(--tomato-dark); }
   .spin-btn {
-    width: 100%;
-    margin-top: 16px;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: var(--tomato);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    width: 100%; margin-top: 16px; padding: 14px; border: none;
+    border-radius: 12px; background: var(--tomato); color: #fff; font-size: 16px;
+    font-weight: 800; cursor: pointer; transition: background 0.15s, transform 0.1s;
+    font-family: inherit;
   }
   .spin-btn:hover:not(:disabled) { background: var(--tomato-dark); }
   .spin-btn:active:not(:disabled) { transform: scale(0.98); }
   .spin-btn:disabled { background: #D8C9B8; cursor: not-allowed; }
-  .hint {
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-top: 10px;
-    text-align: center;
-  }
+  .hint { font-size: 12px; color: var(--ink-soft); margin-top: 10px; text-align: center; }
 
   /* --- 리스트 패널 --- */
-  .add-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+  .add-row { display: flex; gap: 8px; margin-bottom: 14px; }
   .add-row input {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1.5px solid var(--line);
-    border-radius: 10px;
-    font-size: 14px;
-    background: #fff;
-    color: var(--ink);
-    /* ✨ 폰트 적용되도록 수정 */
-    font-family: inherit; 
+    flex: 1; min-width: 0; padding: 10px 12px;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    font-size: 14px; background: #fff; color: var(--ink); font-family: inherit;
   }
-  .add-row input:focus {
-    outline: none;
-    border-color: var(--tomato);
-  }
+  .add-row input:focus { outline: none; border-color: var(--tomato); }
   .add-row button {
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 10px;
-    background: var(--navy);
-    color: #fff;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: inherit;
+    flex: 0 0 auto; padding: 10px 16px; border: none; border-radius: 10px;
+    background: var(--navy); color: #fff; font-weight: 700;
+    font-size: 14px; cursor: pointer; font-family: inherit;
   }
   .add-row button:hover { background: #16203a; }
   .menu-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 340px;
-    overflow-y: auto;
+    list-style: none; margin: 0; padding: 0; display: flex;
+    flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto;
   }
   .menu-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: var(--navy-light);
-    border-radius: 10px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; background: var(--navy-light); border-radius: 10px;
   }
   .menu-list .name {
-    flex: 1;
-    min-width: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--navy);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--navy);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .menu-list .recent-badge {
-    font-size: 11px;
-    color: var(--tomato-dark);
-    background: var(--tomato-light);
-    padding: 2px 7px;
-    border-radius: 999px;
-    font-weight: 700;
-    flex: 0 0 auto;
+    font-size: 11px; color: var(--tomato-dark); background: var(--tomato-light);
+    padding: 2px 7px; border-radius: 999px; font-weight: 700; flex: 0 0 auto;
   }
-  
-  /* 수정 & 삭제 버튼 공통 스타일 */
   .menu-list .action-btn {
-    flex: 0 0 auto;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    color: var(--ink-soft);
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.1s;
-    font-family: inherit;
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+    border: none; background: transparent; color: var(--ink-soft); font-size: 13px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s; font-family: inherit;
   }
-  .menu-list .action-btn:hover {
-    background: #fff;
-  }
-  .menu-list .del-btn:hover {
-    color: var(--tomato-dark);
-  }
-
-  .empty {
-    text-align: center;
-    padding: 30px 10px;
-    color: var(--ink-soft);
-    font-size: 13px;
-  }
-  .count {
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-top: 12px;
-  }
-  .sync-note {
-    font-size: 11px;
-    color: var(--ink-soft);
-    margin-top: 4px;
-    opacity: 0.8;
-  }
+  .menu-list .action-btn:hover { background: #fff; }
+  .menu-list .del-btn:hover { color: var(--tomato-dark); }
+  .empty { text-align: center; padding: 30px 10px; color: var(--ink-soft); font-size: 13px; }
+  .count { font-size: 12px; color: var(--ink-soft); margin-top: 12px; }
+  .sync-note { font-size: 11px; color: var(--ink-soft); margin-top: 4px; opacity: 0.8; }
 </style>
 </head>
 <body>
-
 <div class="app">
   <div class="panel">
-    <p class="eyebrow">오늘 점심 어디서 먹지</p>
-    <h1>식당 추첨</h1>
+    <p class="eyebrow">오늘 점심 어디서 먹지</p> <h1>식당 추첨</h1>
     <div class="stage">
       <div class="burst" id="burst"></div>
       <div class="reel-window idle" id="reelWindow">
@@ -343,8 +163,7 @@
     <p class="hint" id="hint"></p>
   </div>
   <div class="panel">
-    <p class="eyebrow">식당 목록</p>
-    <h1>다같이 채워요</h1>
+    <p class="eyebrow">식당 목록</p> <h1>다같이 채워요</h1>
     <div class="add-row">
       <input type="text" id="newMenuInput" placeholder="예 : 식당이름" maxlength="20" />
       <button id="addBtn">추가</button>
@@ -355,12 +174,10 @@
   </div>
 </div>
 
-<!-- ✨ Firebase 연동을 위한 모듈 스크립트 ✨ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-  // 파이어베이스 설정
   const firebaseConfig = {
     apiKey: "AIzaSyChuyjRAthPxaSpPcZmgNbBruWPCyctWjA",
     authDomain: "lunch-roulette-f8be2.firebaseapp.com",
@@ -373,10 +190,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  let menus = []; 
-  let history = []; 
-  let spinning = false;
-  let showingWinner = false;
+  let menus = []; let history = []; let spinning = false; let showingWinner = false;
 
   const reelEl = document.getElementById('reel');
   const reelWindowEl = document.getElementById('reelWindow');
@@ -388,74 +202,49 @@
   const countText = document.getElementById('countText');
   const hint = document.getElementById('hint');
 
-  function uid() {
-    return Math.random().toString(36).slice(2, 9);
-  }
+  function uid() { return Math.random().toString(36).slice(2, 9); }
 
-  // 데이터 실시간 감지
   onSnapshot(collection(db, "menus"), (snapshot) => {
     menus = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
     render();
   });
-
   onSnapshot(doc(db, "config", "history"), (docSnap) => {
-    if (docSnap.exists()) {
-      history = docSnap.data().recent || [];
-    }
+    if (docSnap.exists()) { history = docSnap.data().recent || []; }
     render();
   });
 
-  // UI 렌더링
   function render() {
     menuListEl.innerHTML = '';
-    
     if (menus.length === 0) {
       menuListEl.innerHTML = '<li class="empty" style="background:transparent;">아직 등록된 식당이 없어요.<br>첫 식당을 추가해보세요.</li>';
     } else {
       menus.forEach(m => {
         const li = document.createElement('li');
         const isRecent = history.slice(0, 2).includes(m.id);
-
-        // 이름 텍스트
         const nameSpan = document.createElement('span');
-        nameSpan.className = 'name';
-        nameSpan.textContent = m.name;
+        nameSpan.className = 'name'; nameSpan.textContent = m.name;
         li.appendChild(nameSpan);
-
-        // 최근 당첨 뱃지
         if (isRecent) {
           const badge = document.createElement('span');
-          badge.className = 'recent-badge';
-          badge.textContent = '최근 당첨';
+          badge.className = 'recent-badge'; badge.textContent = '최근 당첨';
           li.appendChild(badge);
         }
-
-        // ✏️ 수정 버튼
         const editBtn = document.createElement('button');
-        editBtn.className = 'action-btn edit-btn';
-        editBtn.innerHTML = '✏️';
+        editBtn.className = 'action-btn edit-btn'; editBtn.innerHTML = '✏️';
         editBtn.title = '이름 수정';
         editBtn.addEventListener('click', async () => {
           const newName = prompt('식당 이름을 수정해주세요:', m.name);
           if (newName !== null) {
             const v = newName.trim();
-            if (!v || v === m.name) return; 
-            
-            // 중복 검사
+            if (!v || v === m.name) return;
             const isDuplicate = menus.some(x => x.id !== m.id && x.name.replace(/\s/g, '') === v.replace(/\s/g, ''));
-            if (isDuplicate) {
-              alert('이미 등록된 식당입니다! 다른 곳을 적어주세요 🙅‍♂️');
-              return;
-            }
+            if (isDuplicate) { alert('이미 등록된 식당입니다! 🙅‍♂️'); return; }
             await updateDoc(doc(db, "menus", m.id), { name: v });
           }
         });
         li.appendChild(editBtn);
-
-        // ❌ 삭제 버튼
         const delBtn = document.createElement('button');
-        delBtn.className = 'action-btn del-btn';
-        delBtn.innerHTML = '❌';
+        delBtn.className = 'action-btn del-btn'; delBtn.innerHTML = '❌';
         delBtn.title = '삭제';
         delBtn.addEventListener('click', async () => {
           if (confirm(`'${m.name}' 식당을 삭제하시겠습니까?`)) {
@@ -463,59 +252,38 @@
           }
         });
         li.appendChild(delBtn);
-
         menuListEl.appendChild(li);
       });
     }
-
     countText.textContent = `총 ${menus.length}개의 식당`;
-
-    if (!spinning && !showingWinner) {
-      reelWindowEl.classList.add('idle');
-    }
-
+    if (!spinning && !showingWinner) { reelWindowEl.classList.add('idle'); }
     if (!spinning) {
       spinBtn.disabled = menus.length < 2;
       spinBtn.textContent = '돌리기';
     }
-    
-    hint.textContent = menus.length === 0
-      ? '식당을 먼저 추가해주세요.'
-      : menus.length === 1
-      ? '식당이 1개뿐이에요. 하나만 더 추가하면 추첨할 수 있어요.'
-      : '';
+    hint.textContent = menus.length === 0 ? '식당을 먼저 추가해주세요.' : menus.length === 1 ? '하나만 더 추가하면 추첨할 수 있어요.' : '';
   }
 
-  // 메뉴 추가
   addBtn.addEventListener('click', async () => {
     const v = newMenuInput.value.trim();
     if (!v) return;
-    
     const isDuplicate = menus.some(m => m.name.replace(/\s/g, '') === v.replace(/\s/g, ''));
     if (isDuplicate) {
-      alert('이미 등록된 식당입니다! 다른 곳을 적어주세요 🙅‍♂️');
-      newMenuInput.value = ''; 
-      newMenuInput.focus();
-      return; 
+      alert('이미 등록된 식당입니다! 🙅‍♂️');
+      newMenuInput.value = ''; newMenuInput.focus(); return;
     }
-    
     newMenuInput.value = '';
     const newId = uid();
     await setDoc(doc(db, "menus", newId), { name: v });
   });
+  newMenuInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
 
-  newMenuInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addBtn.click();
-  });
-
-  // 룰렛 로직
   function pickWinner() {
     const weighted = [];
     menus.forEach(m => {
       const recentIndex = history.indexOf(m.id);
       let weight = 5;
-      if (recentIndex === 0) weight = 1;
-      else if (recentIndex === 1) weight = 2;
+      if (recentIndex === 0) weight = 1; else if (recentIndex === 1) weight = 2;
       for (let i = 0; i < weight; i++) weighted.push(m);
     });
     return weighted[Math.floor(Math.random() * weighted.length)];
@@ -527,152 +295,18 @@
   function drawReel(pos) {
     const windowHeight = reelWindowEl.offsetHeight;
     const centerY = windowHeight / 2;
-    const baseTop = centerY - ITEM_H / 2; 
+    const baseTop = centerY - ITEM_H / 2;
     const items = reelEl.children;
     const maxAngle = 62;
     const range = centerY + ITEM_H;
+    // ✨ [수정] 아이템이 사라지는 범위 계산을 더 넉넉하게 변경
+    const outOfView = range + ITEM_H * 2;
 
     for (let i = 0; i < items.length; i++) {
       const el = items[i];
       const itemCenter = i * ITEM_H + ITEM_H / 2 - pos;
       const dist = itemCenter - centerY;
-
-      if (Math.abs(dist) > range + ITEM_H) {
-        el.style.display = 'none';
-        continue;
-      }
+      if (Math.abs(dist) > outOfView) { el.style.display = 'none'; continue; }
       el.style.display = 'flex';
       const ratio = Math.max(-1, Math.min(1, dist / range));
-      const angle = ratio * maxAngle;
-      const scale = 1 - Math.abs(ratio) * 0.28;
-      const brightness = 1 - Math.abs(ratio) * 0.55;
-      const opacity = 1 - Math.abs(ratio) * 0.35;
-      el.style.transform = `translateY(${baseTop + dist}px) rotateX(${-angle}deg) scale(${scale})`;
-      el.style.filter = `brightness(${brightness})`;
-      el.style.opacity = opacity;
-    }
-    currentPos = pos;
-  }
-
-  function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
-  function easeOutBack(t) {
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-  }
-
-  function animatePos(from, to, duration, easingFn, onDone) {
-    const startTime = performance.now();
-    function step(now) {
-      const t = Math.min(1, (now - startTime) / duration);
-      const eased = easingFn(t);
-      drawReel(from + (to - from) * eased);
-      if (t < 1) requestAnimationFrame(step);
-      else { drawReel(to); if (onDone) onDone(); }
-    }
-    requestAnimationFrame(step);
-  }
-
-  function spin() {
-    if (spinning || menus.length < 2) return;
-    
-    spinning = true;
-    showingWinner = true;
-    spinBtn.disabled = true;
-    spinBtn.textContent = '추첨 중...';
-    subHint.classList.remove('winner');
-    subHint.textContent = '돌아가는 중...';
-    reelWindowEl.classList.remove('idle', 'celebrate');
-
-    const winner = pickWinner();
-    const TOTAL_SPIN_DISTANCE = 4200; 
-    const overshootExtra = 3; 
-    const neededItems = Math.ceil(TOTAL_SPIN_DISTANCE / ITEM_H) + overshootExtra + 2;
-    const sequence = [];
-
-    while (sequence.length < neededItems) {
-      const shuffled = [...menus].sort(() => Math.random() - 0.5);
-      sequence.push(...shuffled);
-    }
-    const winIndex = sequence.length - overshootExtra - 1;
-    sequence[winIndex] = winner;
-
-    reelEl.innerHTML = '';
-    sequence.forEach((m, idx) => {
-      const item = document.createElement('div');
-      item.className = 'reel-item';
-      item.innerHTML = `<span>${m.name}</span>`;
-      if (idx === winIndex) item.dataset.win = '1';
-      reelEl.appendChild(item);
-    });
-
-    const windowHeight = reelWindowEl.offsetHeight;
-    const centerOffset = (idx) => idx * ITEM_H + ITEM_H / 2 - windowHeight / 2;
-    const winOffset = centerOffset(winIndex);
-    const overshootOffset = centerOffset(winIndex + overshootExtra);
-
-    drawReel(0);
-
-    animatePos(0, overshootOffset, 3000, easeOutQuint, () => {
-      animatePos(overshootOffset, winOffset, 450, easeOutBack, async () => {
-        spinning = false;
-        spinBtn.disabled = menus.length < 2;
-        spinBtn.textContent = '다시 돌리기';
-        
-        const winEl = reelEl.querySelector('[data-win="1"]');
-        if (winEl) {
-          winEl.style.filter = 'brightness(1)';
-          winEl.style.opacity = '1';
-          winEl.classList.add('win');
-          animateWinScale(winEl);
-        }
-
-        subHint.classList.add('winner');
-        subHint.innerHTML = `
-          오늘은 <strong>${winner.name}</strong>!<br>
-          <a href="https://map.kakao.com/link/search/${encodeURIComponent(winner.name)}" target="_blank" 
-             style="display:inline-block; margin-top:12px; padding:8px 16px; background:#FEE500; color:#000; text-decoration:none; border-radius:8px; font-weight:800; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s;">
-             🗺️ 카카오맵에서 위치 보기
-          </a>
-        `;
-
-        const burstEl = document.getElementById('burst');
-        burstEl.classList.remove('on');
-        void burstEl.offsetWidth; 
-        burstEl.classList.add('on');
-
-        const newHistory = [winner.id, ...history.filter(id => id !== winner.id)].slice(0, 5);
-        await setDoc(doc(db, "config", "history"), { recent: newHistory });
-      });
-    });
-  }
-
-  function animateWinScale(el) {
-    const windowHeight = reelWindowEl.offsetHeight;
-    const baseTop = windowHeight / 2 - ITEM_H / 2;
-    const startTime = performance.now();
-    const bounceDuration = 600;
-
-    function step(now) {
-      const t = Math.min(1, (now - startTime) / bounceDuration);
-      let scale;
-      if (t < 0.55) {
-        const p = t / 0.55;
-        scale = 1 + (2.7 - 1) * easeOutBack(p);
-      } else {
-        const p = (t - 0.55) / 0.45;
-        scale = 2.7 + (2.4 - 2.7) * p;
-      }
-      el.style.transform = `translateY(${baseTop}px) rotateX(0deg) scale(${scale})`;
-      if (t < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  spinBtn.addEventListener('click', () => {
-    showingWinner = false;
-    spin();
-  });
-</script>
-</body>
-</html>
+      const angle = ratio *
